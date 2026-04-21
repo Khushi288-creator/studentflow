@@ -240,7 +240,7 @@ You need **two terminals open at the same time**.
 
 **Terminal 1 — Start Backend:**
 ```bash
-cd studentflow-main/backend
+cd backend
 npm run dev
 ```
 You will see:
@@ -251,7 +251,7 @@ You will see:
 
 **Terminal 2 — Start Frontend:**
 ```bash
-cd studentflow-main/frontend
+cd frontend
 npm run dev
 ```
 You will see:
@@ -326,7 +326,7 @@ Prisma Studio is a visual database browser — you can see all stored data in th
 
 **Run this command** (backend terminal):
 ```bash
-cd studentflow-main/backend
+cd backend
 npx prisma studio
 ```
 
@@ -551,5 +551,6 @@ All routes prefixed with `/api`.
 ---
 
 ## Author
+Khushi Trivedi
+GitHub:- https://github.com/Khushi288-creator
 
-Built with React, Node.js, Prisma, and TailwindCSS
