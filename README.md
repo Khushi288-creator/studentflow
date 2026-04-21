@@ -228,7 +228,7 @@ Output:
 Open a **new terminal** in the `frontend` folder:
 
 ```bash
-cd studentflow-main/frontend
+cd frontend
 npm install
 ```
 
