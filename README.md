@@ -149,7 +149,7 @@ studentflow-main/
 Clone from GitHub:
 ```bash
 git clone https://github.com/Khushi288-creator/studentflow.git
-cd studentflow-main
+cd studentflow
 ```
 ---
 
