@@ -148,12 +148,9 @@ studentflow-main/
 
 Clone from GitHub:
 ```bash
-git clone https://github.com/your-username/studentflow.git
+git clone https://github.com/Khushi288-creator/studentflow.git
 cd studentflow-main
 ```
-
-Or copy the folder from USB/drive directly.
-
 ---
 
 ### Step 3 — Backend Setup
