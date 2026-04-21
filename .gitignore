@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+# .env.example is intentionally NOT ignored — it must be committed to GitHub
+backend/dev.db
+backend/uploads/
+*.log
+dist/
+build/
+.vscode/
