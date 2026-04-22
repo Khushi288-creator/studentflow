@@ -41,7 +41,7 @@ router.get('/dashboard/admin/summary', authenticateJWT, async (req, res) => {
       where: { date: { gte: new Date() } },
       orderBy: { date: 'asc' },
       take: 5,
-      select: { id: true, title: true, description: true, date: true },
+      select: { id: true, title: true, description: true, date: true, time: true },
     })
 
     // Recent notices/announcements
@@ -56,8 +56,15 @@ router.get('/dashboard/admin/summary', authenticateJWT, async (req, res) => {
       stats: { totalStudents, totalTeachers, totalAdmins, totalSubjects, totalAssignments, attendancePct },
       attendanceByDay,
       fees: { total: totalFees, paid: paidFees, pending: pendingFees },
-      events: events.map(e => ({ id: e.id, title: e.title, description: e.description, date: e.date.toISOString().slice(0,10) })),
-      notices: notices.map(n => ({ id: n.id, title: n.title, description: n.description, date: n.date.toISOString().slice(0,10) })),
+      events: events.map((e: any) => ({
+        id: e.id, title: e.title, description: e.description,
+        date: e.date instanceof Date ? e.date.toISOString().slice(0,10) : String(e.date ?? '').slice(0,10),
+        time: e.time ?? '',
+      })),
+      notices: notices.map((n: any) => ({
+        id: n.id, title: n.title, description: n.description,
+        date: n.date instanceof Date ? n.date.toISOString().slice(0,10) : String(n.date ?? '').slice(0,10),
+      })),
     })
   } catch (err) {
     console.error('[GET /dashboard/admin/summary]', err)
@@ -270,6 +277,299 @@ router.get('/dashboard/student/summary', authenticateJWT, async (req, res) => {
   } catch (err) {
     console.error('[GET /dashboard/student/summary]', err)
     res.status(500).json({ message: 'Failed to load dashboard summary' })
+  }
+})
+
+// Quick Stats for Teacher Dashboard
+router.get('/dashboard/teacher/quick-stats', authenticateJWT, async (req, res) => {
+  try {
+    if (req.auth!.role !== 'teacher') return res.status(403).json({ message: 'Forbidden' })
+
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: req.auth!.userId },
+      select: { id: true },
+    })
+    if (!teacher) return res.json({ 
+      totalStudents: 0, avgAttendance: 0, assignmentsGraded: 0, 
+      avgClassPerformance: 0, topPerformer: null, improvementNeeded: 0 
+    })
+
+    const courses = await prisma.course.findMany({
+      where: { teacherId: teacher.id },
+      select: { id: true },
+    })
+    const courseIds = courses.map(c => c.id)
+
+    // Total unique students
+    const enrollments = await prisma.studentEnrollment.findMany({
+      where: { courseId: { in: courseIds } },
+      select: { userId: true, id: true },
+    })
+    const totalStudents = new Set(enrollments.map(e => e.userId)).size
+    const studentIds = enrollments.map(e => e.id)
+
+    // Average attendance (last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const recentAttendance = await prisma.attendance.findMany({
+      where: { 
+        courseId: { in: courseIds },
+        date: { gte: thirtyDaysAgo }
+      },
+      select: { status: true },
+    })
+    const totalAttendanceRecords = recentAttendance.length
+    const presentRecords = recentAttendance.filter(a => a.status === 'present').length
+    const avgAttendance = totalAttendanceRecords > 0 
+      ? Math.round((presentRecords / totalAttendanceRecords) * 100) 
+      : 0
+
+    // Assignments graded
+    const assignments = await prisma.assignment.findMany({
+      where: { courseId: { in: courseIds } },
+      select: { id: true },
+    })
+    const submissions = await prisma.submission.findMany({
+      where: { 
+        assignmentId: { in: assignments.map(a => a.id) },
+        marks: { not: null }
+      },
+      select: { 
+        marks: true,
+        student: { 
+          select: { 
+            userId: true,
+            user: { select: { name: true } }
+          }
+        }
+      },
+    })
+    const assignmentsGraded = submissions.length
+
+    // Average class performance
+    const avgClassPerformance = submissions.length > 0
+      ? Math.round(submissions.reduce((sum, s) => sum + (s.marks || 0), 0) / submissions.length)
+      : 0
+
+    // Top performer
+    const studentScores = new Map<string, { name: string; scores: number[] }>()
+    submissions.forEach(s => {
+      const userId = s.student.userId
+      const name = s.student.user.name
+      if (!studentScores.has(userId)) {
+        studentScores.set(userId, { name, scores: [] })
+      }
+      studentScores.get(userId)!.scores.push(s.marks || 0)
+    })
+
+    const studentAverages = Array.from(studentScores.entries()).map(([userId, data]) => ({
+      userId,
+      name: data.name,
+      average: data.scores.reduce((a, b) => a + b, 0) / data.scores.length
+    }))
+
+    const topPerformer = studentAverages.length > 0
+      ? studentAverages.reduce((top, current) => 
+          current.average > top.average ? current : top
+        )
+      : null
+
+    // Students needing improvement
+    const improvementNeeded = studentAverages.filter(s => s.average < 60).length
+
+    res.json({
+      totalStudents,
+      avgAttendance,
+      assignmentsGraded,
+      avgClassPerformance,
+      topPerformer: topPerformer ? {
+        name: topPerformer.name,
+        score: Math.round(topPerformer.average)
+      } : null,
+      improvementNeeded
+    })
+  } catch (err) {
+    console.error('[GET /dashboard/teacher/quick-stats]', err)
+    res.status(500).json({ message: 'Failed to load quick stats' })
+  }
+})
+
+// Enhanced Teacher Performance Analytics
+router.get('/dashboard/teacher/performance-analytics', authenticateJWT, async (req, res) => {
+  try {
+    if (req.auth!.role !== 'teacher') return res.status(403).json({ message: 'Forbidden' })
+
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: req.auth!.userId },
+      select: { id: true, subject: true },
+    })
+    if (!teacher) return res.json({ 
+      marksTrend: [], avgMarks: null, weakStudents: [], attendance: { present: 0, absent: 0, late: 0 },
+      subjectPerformance: [], gradeDistribution: [], submissionTrend: []
+    })
+
+    const courses = await prisma.course.findMany({
+      where: { teacherId: teacher.id },
+      select: { id: true, name: true },
+    })
+    const courseIds = courses.map(c => c.id)
+
+    // Get all enrollments for teacher's courses
+    const enrollments = await prisma.studentEnrollment.findMany({
+      where: { courseId: { in: courseIds } },
+      select: { userId: true, courseId: true, id: true },
+    })
+    const studentIds = enrollments.map(e => e.id)
+
+    // Get all assignments and submissions
+    const assignments = await prisma.assignment.findMany({
+      where: { courseId: { in: courseIds } },
+      select: { id: true, courseId: true, createdAt: true },
+    })
+    const assignmentIds = assignments.map(a => a.id)
+
+    const submissions = await prisma.submission.findMany({
+      where: { assignmentId: { in: assignmentIds } },
+      select: { 
+        id: true, 
+        marks: true, 
+        createdAt: true,
+        assignmentId: true,
+        student: { 
+          select: { 
+            userId: true, 
+            courseId: true,
+            user: { select: { name: true } } 
+          } 
+        } 
+      },
+    })
+
+    // 1. Marks Trend (last 4 weeks)
+    const marksData = submissions.filter(s => s.marks != null)
+    const marksTrend = [1,2,3,4].map(w => {
+      const weekSubmissions = marksData.slice(
+        Math.max(0, marksData.length - w * Math.ceil(marksData.length / 4)),
+        marksData.length - (w-1) * Math.ceil(marksData.length / 4)
+      )
+      const avg = weekSubmissions.length
+        ? Math.round(weekSubmissions.reduce((a, s) => a + (s.marks ?? 0), 0) / weekSubmissions.length)
+        : 0
+      return { label: `Week ${5-w}`, value: avg }
+    }).reverse()
+
+    // 2. Average marks
+    const avgMarks = marksData.length
+      ? Math.round(marksData.reduce((acc, s) => acc + (s.marks ?? 0), 0) / marksData.length)
+      : null
+
+    // 3. Weak students
+    const studentMarksMap = new Map<string, { name: string; marks: number[] }>()
+    for (const s of marksData) {
+      const name = s.student.user.name
+      const uid = s.student.userId
+      if (!studentMarksMap.has(uid)) studentMarksMap.set(uid, { name, marks: [] })
+      studentMarksMap.get(uid)!.marks.push(s.marks!)
+    }
+    const weakStudents = Array.from(studentMarksMap.entries())
+      .map(([uid, d]) => ({
+        userId: uid,
+        name: d.name,
+        avg: Math.round(d.marks.reduce((a, b) => a + b, 0) / d.marks.length),
+      }))
+      .filter(s => s.avg < 60)
+      .sort((a, b) => a.avg - b.avg)
+      .slice(0, 8)
+
+    // 4. Today's attendance
+    const today = new Date(); today.setHours(0,0,0,0)
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+    const todayAttendance = await prisma.attendance.findMany({
+      where: { courseId: { in: courseIds }, date: { gte: today, lt: tomorrow } },
+      select: { status: true },
+    })
+    const attendance = {
+      present: todayAttendance.filter(a => a.status === 'present').length,
+      absent: todayAttendance.filter(a => a.status === 'absent').length,
+      late: todayAttendance.filter(a => a.status === 'late').length,
+    }
+
+    // 5. Subject-wise performance
+    const subjectPerformance = courses.map(course => {
+      const courseSubmissions = submissions.filter(s => s.student.courseId === course.id && s.marks != null)
+      const courseEnrollments = enrollments.filter(e => e.courseId === course.id)
+      const avgMarks = courseSubmissions.length
+        ? Math.round(courseSubmissions.reduce((a, s) => a + (s.marks ?? 0), 0) / courseSubmissions.length)
+        : 0
+      return {
+        subject: course.name,
+        avgMarks,
+        totalStudents: courseEnrollments.length
+      }
+    })
+
+    // 6. Grade distribution
+    const getGrade = (marks: number): string => {
+      if (marks >= 90) return 'A+'
+      if (marks >= 80) return 'A'
+      if (marks >= 70) return 'B+'
+      if (marks >= 60) return 'B'
+      if (marks >= 50) return 'C'
+      return 'F'
+    }
+
+    const gradeMap = new Map<string, number>()
+    marksData.forEach(s => {
+      const grade = getGrade(s.marks!)
+      gradeMap.set(grade, (gradeMap.get(grade) || 0) + 1)
+    })
+
+    const totalGraded = marksData.length
+    const gradeDistribution = Array.from(gradeMap.entries()).map(([grade, count]) => ({
+      grade,
+      count,
+      percentage: totalGraded > 0 ? Math.round((count / totalGraded) * 100) : 0
+    })).sort((a, b) => {
+      const gradeOrder = ['A+', 'A', 'B+', 'B', 'C', 'F']
+      return gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade)
+    })
+
+    // 7. Submission trends (last 4 weeks)
+    const now = new Date()
+    const submissionTrend = []
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = new Date(now.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000)
+      const weekEnd = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000)
+      
+      const weekAssignments = assignments.filter(a => 
+        a.createdAt >= weekStart && a.createdAt < weekEnd
+      )
+      const weekSubmissions = submissions.filter(s => 
+        s.createdAt >= weekStart && s.createdAt < weekEnd
+      )
+      
+      const expectedSubmissions = weekAssignments.length * enrollments.length
+      const actualSubmissions = weekSubmissions.length
+      const pendingSubmissions = Math.max(0, expectedSubmissions - actualSubmissions)
+      
+      submissionTrend.push({
+        week: `Week ${4-i}`,
+        submitted: actualSubmissions,
+        pending: pendingSubmissions
+      })
+    }
+
+    res.json({
+      marksTrend,
+      avgMarks,
+      weakStudents,
+      attendance,
+      subjectPerformance,
+      gradeDistribution,
+      submissionTrend
+    })
+  } catch (err) {
+    console.error('[GET /dashboard/teacher/performance-analytics]', err)
+    res.status(500).json({ message: 'Failed to load performance analytics' })
   }
 })
 

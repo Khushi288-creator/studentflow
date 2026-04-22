@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { authenticateJWT, requireRole } from '../middleware/auth'
 import { photoUpload } from '../utils/upload'
+import AttendanceModel from '../models/Attendance'
+import StudentEnrollmentModel from '../models/StudentEnrollment'
 
 const router = express.Router()
 
@@ -177,21 +179,17 @@ router.get('/parents/dashboard', authenticateJWT, requireRole(['parent']), async
       include: { studentProfile: true },
     })
 
-    // Enrollments
-    const enrollments = await prisma.studentEnrollment.findMany({
-      where: { userId: studentUserId },
-      select: { id: true, courseId: true },
-    })
-    const enrollmentIds = enrollments.map(e => e.id)
-    const courseIds = enrollments.map(e => e.courseId)
+    // Enrollments — use Mongoose directly to avoid ObjectId cast issues
+    const enrollmentDocs = await StudentEnrollmentModel.find({ userId: studentUserId }).lean()
+    const enrollmentIds = enrollmentDocs.map((e: any) => e._id.toString())
+    const courseIds = enrollmentDocs.map((e: any) => e.courseId)
 
-    // Attendance
-    const attendance = await prisma.attendance.findMany({
-      where: { studentId: { in: enrollmentIds } },
-      select: { status: true },
-    })
-    const totalAtt = attendance.length
-    const presentAtt = attendance.filter(a => a.status === 'present').length
+    // Attendance — use Mongoose directly
+    const attendanceDocs = await AttendanceModel.find({
+      studentId: { $in: enrollmentIds },
+    }).lean()
+    const totalAtt = attendanceDocs.length
+    const presentAtt = attendanceDocs.filter((a: any) => a.status === 'present').length
     const attendancePct = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0
 
     // Fees
@@ -225,11 +223,19 @@ router.get('/parents/dashboard', authenticateJWT, requireRole(['parent']), async
     })
 
     // Achievements
-    const achievements = await prisma.achievement.findMany({
+    const achievementRows = await prisma.achievement.findMany({
       where: { studentId: studentUserId },
       orderBy: { createdAt: 'desc' },
       take: 5,
     })
+    const achievements = achievementRows.map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      type: a.type,
+      rank: a.rank ?? null,
+      date: a.date ?? null,
+      description: a.description ?? null,
+    }))
 
     // Skill Hub enrollments
     const activityEnrollments = await prisma.activityEnrollment.findMany({
@@ -242,7 +248,7 @@ router.get('/parents/dashboard', authenticateJWT, requireRole(['parent']), async
       where: { date: { gte: new Date() } },
       orderBy: { date: 'asc' },
       take: 5,
-      select: { id: true, title: true, date: true, description: true },
+      select: { id: true, title: true, date: true, time: true, description: true },
     })
 
     // Holidays
@@ -279,9 +285,9 @@ router.get('/parents/dashboard', authenticateJWT, requireRole(['parent']), async
       },
       attendance: { total: totalAtt, present: presentAtt, percentage: attendancePct },
       fees: { total: totalFees, paid: paidFees, pending: pendingFees, records: fees },
-      assignments: assignments.map(a => ({
+      assignments: assignments.map((a: any) => ({
         id: a.id, title: a.title, courseName: (a as any).course?.name,
-        dueDate: a.dueDate.toISOString().slice(0, 10),
+        dueDate: a.dueDate instanceof Date ? a.dueDate.toISOString().slice(0, 10) : String(a.dueDate ?? '').slice(0, 10),
         submitted: submittedIds.has(a.id),
       })),
       results: results.map(r => ({
@@ -293,7 +299,11 @@ router.get('/parents/dashboard', authenticateJWT, requireRole(['parent']), async
         scheduleDays: e.activity.scheduleDays, fees: e.activity.fees,
         paymentStatus: e.paymentStatus,
       })),
-      events: events.map(e => ({ ...e, date: e.date.toISOString().slice(0, 10) })),
+      events: events.map((e: any) => ({
+        id: e.id, title: e.title, description: e.description,
+        date: e.date instanceof Date ? e.date.toISOString().slice(0, 10) : String(e.date ?? '').slice(0, 10),
+        time: e.time ?? '',
+      })),
       holidays,
       performance,
       timetable,
@@ -526,8 +536,6 @@ router.get('/parents/list', authenticateJWT, requireRole(['teacher', 'admin']), 
   }
 })
 
-export default router
-
 // GET teachers list accessible by parent (for chat)
 router.get('/parents/teachers', authenticateJWT, requireRole(['parent']), async (_req, res) => {
   try {
@@ -545,3 +553,5 @@ router.get('/parents/teachers', authenticateJWT, requireRole(['parent']), async 
     res.status(500).json({ message: err?.message })
   }
 })
+
+export default router

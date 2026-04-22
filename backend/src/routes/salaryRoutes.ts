@@ -60,20 +60,23 @@ router.post('/admin/salary', authenticateJWT, requireRole(['admin']), async (req
 router.get('/admin/salary', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { month, year, status } = req.query as Record<string, string>
-    const salaries = await prisma.salary.findMany({
-      where: {
-        ...(month && month !== 'all' ? { month: Number(month) } : {}),
-        ...(year && year !== 'all' ? { year: Number(year) } : {}),
-        ...(status && status !== 'all' ? { status } : {}),
-      },
-      orderBy: [{ year: 'desc' }, { month: 'desc' }],
-      include: { teacher: { select: { name: true } } },
-    })
+    const SalaryModel = require('../models/Salary').default
+    const UserModel = require('../models/User').default
+
+    const filter: any = {}
+    if (month && month !== 'all') filter.month = Number(month)
+    if (year && year !== 'all') filter.year = Number(year)
+    if (status && status !== 'all') filter.status = status
+
+    const salaries = await SalaryModel.find(filter).sort({ year: -1, month: -1 }).lean() as any[]
+    const teacherIds = [...new Set(salaries.map((s: any) => s.teacherId).filter(Boolean))]
+    const users = teacherIds.length ? await UserModel.find({ _id: { $in: teacherIds } }).lean() as any[] : []
+    const userMap = Object.fromEntries(users.map((u: any) => [u._id?.toString(), u.name]))
 
     res.json({
-      salaries: salaries.map(s => ({
-        id: s.id,
-        teacherName: s.teacher.name,
+      salaries: salaries.map((s: any) => ({
+        id: s._id?.toString(),
+        teacherName: userMap[s.teacherId?.toString()] ?? '—',
         teacherId: s.teacherId,
         month: s.month,
         monthName: MONTHS[s.month - 1],
@@ -85,7 +88,7 @@ router.get('/admin/salary', authenticateJWT, requireRole(['admin']), async (req,
         latePenalty: s.latePenalty,
         netSalary: s.netSalary,
         status: s.status,
-        paidAt: s.paidAt?.toISOString().slice(0, 10) ?? null,
+        paidAt: s.paidAt ? new Date(s.paidAt).toISOString().slice(0, 10) : null,
       })),
     })
   } catch (err: any) {

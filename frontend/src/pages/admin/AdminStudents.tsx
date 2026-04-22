@@ -178,30 +178,35 @@ export default function AdminStudents() {
 
       {/* Modal — inline JSX, NOT a nested component, so inputs don't lose focus */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/30 dark:bg-black/50 p-4 backdrop-blur-sm"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
           onClick={closeModal}>
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950 overflow-y-auto max-h-[90vh]"
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 flex flex-col"
+            style={{ maxHeight: 'min(90vh, 700px)', marginTop: 'auto', marginBottom: 'auto' }}
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+
+            {/* Fixed header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                 {modalMode === 'create' ? 'Create Student' : 'Edit Student'}
               </h2>
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-700 text-xl leading-none">✕</button>
             </div>
 
+            {/* Scrollable body */}
+            <div className="overflow-y-auto px-6 pb-6 flex-1">
             {error && <div className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-600 dark:bg-rose-950/30">{error}</div>}
 
             {/* Photo upload */}
-            <div className="mb-4 flex items-center gap-4">
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+            <div className="mb-5 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-4 dark:border-slate-700 dark:bg-slate-900/50">
+              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                 {photoPreview ? (
                   <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl text-slate-500 dark:text-slate-400">👤</div>
+                  <div className="flex h-full w-full items-center justify-center text-3xl text-slate-400 dark:text-slate-500">👤</div>
                 )}
               </div>
               <label className="cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                {photoPreview ? '📷 Change Photo' : '📷 Upload Photo'}
                 <input type="file" accept="image/*" className="hidden"
                   onChange={e => {
                     const file = e.target.files?.[0] ?? null
@@ -209,7 +214,7 @@ export default function AdminStudents() {
                     setPhotoPreview(file ? URL.createObjectURL(file) : null)
                   }} />
               </label>
-              {photoFile && <span className="text-xs text-slate-500 truncate max-w-[120px]">{photoFile.name}</span>}
+              {photoFile && <span className="text-xs text-slate-500 truncate max-w-[180px]">{photoFile.name}</span>}
             </div>
 
             <div className="text-xs font-semibold text-slate-400 uppercase mb-2">Authentication</div>
@@ -309,6 +314,7 @@ export default function AdminStudents() {
               className="mt-5 w-full rounded-2xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
               {isPending ? 'Saving...' : modalMode === 'create' ? 'Create Student' : 'Save Changes'}
             </button>
+            </div>
           </div>
         </div>
       )}

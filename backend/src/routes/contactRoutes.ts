@@ -8,20 +8,23 @@ const router = express.Router()
 // ── Public: list teachers (any authenticated user — for dropdowns) ────────
 router.get('/teachers', authenticateJWT, async (_req, res) => {
   try {
-    const teachers = await prisma.teacher.findMany({
-      select: {
-        userId: true,
-        subject: true,
-        user: { select: { id: true, name: true } },
-      },
-      orderBy: { user: { name: 'asc' } },
-    })
+    // Get all users with teacher role directly
+    const UserModel = require('../models/User').default
+    const TeacherModel = require('../models/Teacher').default
+    const teacherUsers = await UserModel.find({ role: 'teacher' }).lean()
+    const teacherProfiles = await TeacherModel.find({}).lean()
+    const profileMap = Object.fromEntries(
+      teacherProfiles.map((t: any) => [t.userId?.toString(), t])
+    )
     res.json({
-      teachers: teachers.map(t => ({
-        id: t.user.id,
-        name: t.user.name,
-        subject: t.subject ?? '',
-      })),
+      teachers: teacherUsers.map((u: any) => {
+        const profile = profileMap[u._id?.toString()]
+        return {
+          id: u._id?.toString(),
+          name: u.name,
+          subject: profile?.subject ?? '',
+        }
+      }),
     })
   } catch (err: any) {
     res.status(500).json({ message: err?.message ?? 'Failed' })
@@ -167,9 +170,7 @@ router.get('/contact/teacher-messages', authenticateJWT, requireRole(['teacher']
 const sendSchema = z.object({
   teacherId: z.string().min(1, 'Please select a teacher'),
   message: z.string().min(5, 'Message must be at least 5 characters'),
-  category: z.enum(['complaint', 'query', 'request'], {
-    errorMap: () => ({ message: 'Category must be complaint, query, or request' }),
-  }),
+  category: z.enum(['complaint', 'query', 'request'] as const).refine(v => ['complaint','query','request'].includes(v), { message: 'Category must be complaint, query, or request' }),
 })
 
 router.post('/contact', authenticateJWT, requireRole(['student']), async (req, res) => {

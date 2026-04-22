@@ -47,7 +47,11 @@ export default function TeacherBioCard() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{user?.name ?? '—'}</div>
-            <div className="mt-0.5 text-xs text-slate-500">{user?.email ?? '—'}</div>
+            <div className="mt-0.5 text-xs text-slate-500">
+              {user?.email
+                ? <a href={`mailto:${user.email}`} className="hover:underline text-indigo-600 dark:text-indigo-400">{user.email}</a>
+                : '—'}
+            </div>
             <div className="mt-0.5 text-xs text-slate-500">Phone: {val(t?.phone)}</div>
           </div>
         </div>

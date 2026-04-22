@@ -118,15 +118,15 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav?: () => vo
           <button
             type="button"
             onClick={() => {
-              if (user?.role === 'parent') {
-                window.location.href = 'mailto:admin@studentflow.com?subject=Parent%20Support%20Request&body=Hello%20Admin%2C%0A%0A'
+              if (user?.role === 'admin') {
+                navigate('/admin/email')
               } else {
                 navigate('/contact')
               }
             }}
             className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900"
             aria-label="Email"
-            title={user?.role === 'parent' ? 'Contact Admin' : 'Contact'}
+            title={user?.role === 'admin' ? 'Email Center' : 'Contact'}
           >
             <span className="text-lg">✉️</span>
           </button>

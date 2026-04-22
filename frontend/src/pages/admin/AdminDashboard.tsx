@@ -22,7 +22,7 @@ type AdminSummary = {
   }
   attendanceByDay: { day: string; present: number; absent: number }[]
   fees: { total: number; paid: number; pending: number }
-  events: { id: string; title: string; description: string; date: string }[]
+  events: { id: string; title: string; description: string; date: string; time?: string }[]
   notices: { id: string; title: string; description: string; date: string }[]
 }
 
@@ -32,7 +32,7 @@ function StatCard({ label, value, color, to }: { label: string; value: number | 
   return (
     <div
       onClick={() => to && navigate(to)}
-      className={`rounded-2xl p-5 text-white ${color} ${to ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+      className={`rounded-2xl p-5 text-white ${color} ${to ? 'cursor-pointer' : ''} transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-black/20 hover:brightness-110`}
     >
       <div className="text-3xl font-bold">{value}</div>
       <div className="mt-1 text-sm font-medium opacity-90">{label}</div>
@@ -91,6 +91,7 @@ export default function AdminDashboard() {
       const res = await http.get('/dashboard/admin/summary')
       return res.data as AdminSummary
     },
+    refetchInterval: 30000,
   })
 
   const s = summaryQuery.data
@@ -123,7 +124,7 @@ export default function AdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-12">
 
         {/* Students donut */}
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-400/40">
           <CardHeader title="Students" subtitle="Enrolled count" />
           <CardBody>
             <div style={{ height: 180 }}>
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Attendance bar chart */}
-        <Card className="lg:col-span-5">
+        <Card className="lg:col-span-5 transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-400/40">
           <CardHeader title="Attendance" subtitle="Last 7 days" />
           <CardBody>
             <div style={{ height: 200 }}>
@@ -165,7 +166,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Calendar */}
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-4 transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-400/40">
           <CardHeader title="Calendar" subtitle={new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} />
           <CardBody>
             <MiniCalendar />
@@ -177,7 +178,7 @@ export default function AdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-12">
 
         {/* Finance line chart */}
-        <Card className="lg:col-span-5">
+        <Card className="lg:col-span-5 transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-400/40">
           <CardHeader title="Finance" subtitle="Paid vs Pending fees" />
           <CardBody>
             <div style={{ height: 180 }}>
@@ -200,22 +201,22 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Events */}
-        <Card className="lg:col-span-3">
-          <CardHeader title="Events" subtitle="Upcoming" />
+        <Card className="lg:col-span-3 transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-400/40">
+          <CardHeader title="🎉 Events" subtitle="Upcoming" />
           <CardBody className="space-y-3">
             {(s?.events ?? []).length === 0 && <p className="text-xs text-slate-500">No upcoming events.</p>}
             {(s?.events ?? []).map(e => (
               <div key={e.id} className="border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0">
                 <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{e.title}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{e.description}</div>
-                <div className="text-xs text-indigo-500 mt-0.5">{e.date}</div>
+                <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{e.description}</div>
+                <div className="text-xs text-indigo-500 mt-0.5">{e.date}{e.time ? ` · ${e.time}` : ''}</div>
               </div>
             ))}
           </CardBody>
         </Card>
 
         {/* Announcements */}
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-4 transition-all duration-300 hover:scale-[1.05] hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-400/40">
           <CardHeader title="Announcements" subtitle="Recent notices" />
           <CardBody className="space-y-3">
             {(s?.notices ?? []).length === 0 && <p className="text-xs text-slate-500">No announcements yet.</p>}

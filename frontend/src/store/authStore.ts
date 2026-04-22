@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type UserRole = 'student' | 'teacher' | 'admin' | 'parent'
+export type UserRole = 'student' | 'teacher' | 'admin' | 'parent' | 'exam_department'
 
 export type AuthUser = {
   id: string

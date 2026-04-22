@@ -11,9 +11,9 @@ type DashData = {
   fees: { total: number; paid: number; pending: number }
   assignments: { id: string; title: string; courseName: string; dueDate: string; submitted: boolean }[]
   results: { id: string; courseName: string; marks: number; grade: string }[]
-  achievements: { id: string; title: string; type: string; rank: string | null; date: string | null }[]
+  achievements: { id: string; title: string; type: string; rank: string | null; date: string | null; description: string | null }[]
   activityEnrollments: { id: string; activityName: string; icon: string; scheduleDays: string; fees: number; paymentStatus: string }[]
-  events: { id: string; title: string; date: string }[]
+  events: { id: string; title: string; date: string; time?: string; description?: string }[]
   holidays: { id: string; name: string; date: string }[]
   performance: { id: string; subject: string; marks: number; examName: string }[]
   alerts: { type: string; message: string }[]
@@ -363,12 +363,15 @@ export default function ParentDashboard() {
                 {d.achievements.length === 0
                   ? <p className="text-xs text-slate-500 text-center py-4">No achievements yet.</p>
                   : <div className="space-y-2">
-                      {d.achievements.map(a => (
-                        <div key={a.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-                          <span className="text-xl">🏆</span>
-                          <div>
+                      {d.achievements.map((a: any) => (
+                        <div key={a.id} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+                          <span className="text-xl mt-0.5">{a.type === 'achievement' ? '🏆' : '📘'}</span>
+                          <div className="min-w-0">
                             <div className="text-xs font-medium text-slate-700 dark:text-slate-200">{a.title}</div>
-                            <div className="text-[10px] text-slate-500">{a.type}{a.rank ? ` · Rank: ${a.rank}` : ''}{a.date ? ` · ${a.date}` : ''}</div>
+                            {a.description && <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{a.description}</div>}
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {a.type}{a.rank ? ` · ${a.rank}` : ''}{a.date ? ` · ${a.date}` : ''}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -405,10 +408,11 @@ export default function ParentDashboard() {
                 {d.events.length === 0
                   ? <p className="text-xs text-slate-500 text-center py-4">No upcoming events.</p>
                   : <div className="space-y-2">
-                      {d.events.map(e => (
-                        <div key={e.id} className="flex justify-between py-1.5 border-b border-white/5 last:border-0">
-                          <span className="text-xs text-slate-700 dark:text-slate-200">{e.title}</span>
-                          <span className="text-[10px] text-slate-500">{e.date}</span>
+                      {d.events.map((e: any) => (
+                        <div key={e.id} className="py-1.5 border-b border-white/5 last:border-0">
+                          <div className="text-xs font-medium text-slate-700 dark:text-slate-200">{e.title}</div>
+                          {e.description && <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{e.description}</div>}
+                          <div className="text-[10px] text-indigo-400 mt-0.5">{e.date}{e.time ? ` · ${e.time}` : ''}</div>
                         </div>
                       ))}
                     </div>
@@ -451,7 +455,7 @@ export default function ParentDashboard() {
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span>🏫</span><span>StudentFlow School</span></div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span>📱</span><span>+91 98765 43210</span></div>
-                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span>📧</span><span>admin@studentflow.edu</span></div>
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span>📧</span><a href="mailto:admin@studentflow.edu" className="hover:underline">admin@studentflow.edu</a></div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span>🕐</span><span>Mon–Sat, 8 AM – 4 PM</span></div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span>🚨</span><span className="text-rose-300 font-semibold">Emergency: +91 99999 00000</span></div>
                 </div>

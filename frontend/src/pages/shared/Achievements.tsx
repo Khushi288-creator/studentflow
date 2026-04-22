@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import ReactDOM from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { http } from '../../api/http'
 import { useAuthStore } from '../../store/authStore'
@@ -12,6 +13,7 @@ type AchievementRow = {
   type: 'achievement' | 'activity'
   rank: string | null
   date: string | null
+  description: string | null
   studentId: string
   studentName: string
   className: string | null
@@ -63,6 +65,9 @@ function AchievCard({
             <RankBadge rank={row.rank} />
           </div>
           <div className="text-sm font-semibold text-slate-900 dark:text-slate-50 mt-1">{row.title}</div>
+          {row.description && (
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{row.description}</div>
+          )}
           {showStudent && (
             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               {row.studentName}{row.className ? ` · Class ${row.className}` : ''}
@@ -184,13 +189,14 @@ function Modal({
   const [type, setType] = useState<'achievement' | 'activity'>(initial.type ?? 'achievement')
   const [rank, setRank] = useState(initial.rank ?? '')
   const [date, setDate] = useState(initial.date ?? '')
+  const [description, setDescription] = useState(initial.description ?? '')
 
   useModalClose(true, onClose)
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/40 dark:bg-black/60 p-4 backdrop-blur-sm"
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/40 dark:bg-black/60 p-4 backdrop-blur-sm"
       onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-950"
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-white dark:bg-[#0f172a] p-6 shadow-2xl"
         onClick={e => e.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
@@ -239,16 +245,23 @@ function Modal({
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50" />
           </label>
+
+          <label className="grid gap-1">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Description (optional)</span>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
+              placeholder="e.g. Won first place in inter-school science exhibition"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 resize-none" />
+          </label>
         </div>
 
         <button type="button" disabled={saving || !title || (mode === 'create' && !studentId)}
-          onClick={() => onSave({ studentId, title, type, rank: rank || null, date: date || null })}
+          onClick={() => onSave({ studentId, title, type, rank: rank || null, date: date || null, description: description || null })}
           className="mt-5 w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
-          {saving ? 'Saving...' : mode === 'create' ? 'Add' : 'Save Changes'}
+          {saving ? 'Saving...' : mode === 'create' ? '✓ Add Achievement' : 'Save Changes'}
         </button>
       </div>
     </div>
-  )
+  , document.body)
 }
 
 // ── Main Page ──────────────────────────────────────────────────────────────
@@ -261,6 +274,12 @@ export default function Achievements() {
   const [modalMode, setModalMode] = useState<'none' | 'create' | 'edit'>('none')
   const [editRow, setEditRow] = useState<AchievementRow | null>(null)
   const [modalError, setModalError] = useState('')
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+
+  const showToast = (type: 'success' | 'error', msg: string) => {
+    setToast({ type, msg })
+    setTimeout(() => setToast(null), 3500)
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ['achievements'],
@@ -275,19 +294,39 @@ export default function Achievements() {
 
   const createMutation = useMutation({
     mutationFn: async (body: any) => (await http.post('/achievements', body)).data,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['achievements'] }); setModalMode('none'); setModalError('') },
-    onError: (e: any) => setModalError(e?.response?.data?.message ?? 'Failed'),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      setModalMode('none'); setModalError('')
+      showToast('success', data?.message ?? 'Achievement saved successfully!')
+    },
+    onError: (e: any) => {
+      const msg = e?.response?.data?.message ?? 'Failed to save achievement'
+      setModalError(msg)
+      showToast('error', msg)
+    },
   })
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...body }: any) => (await http.put(`/achievements/${id}`, body)).data,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['achievements'] }); setModalMode('none'); setModalError('') },
-    onError: (e: any) => setModalError(e?.response?.data?.message ?? 'Failed'),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      setModalMode('none'); setModalError('')
+      showToast('success', data?.message ?? 'Achievement updated successfully!')
+    },
+    onError: (e: any) => {
+      const msg = e?.response?.data?.message ?? 'Failed to update achievement'
+      setModalError(msg)
+      showToast('error', msg)
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => (await http.delete(`/achievements/${id}`)).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['achievements'] }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      showToast('success', data?.message ?? 'Achievement deleted.')
+    },
+    onError: (e: any) => showToast('error', e?.response?.data?.message ?? 'Failed to delete'),
   })
 
   const rows = data?.achievements ?? []
@@ -317,6 +356,20 @@ export default function Achievements() {
         ) : null
       }
     >
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-20 right-6 z-50 rounded-2xl border px-5 py-3 shadow-2xl animate-in slide-in-from-right-5 ${
+          toast.type === 'success'
+            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+            : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{toast.type === 'success' ? '✓' : '✕'}</span>
+            <span className="text-sm font-semibold">{toast.msg}</span>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-sm text-slate-500">Loading...</p>
       ) : (

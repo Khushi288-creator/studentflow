@@ -31,6 +31,8 @@ const items: Item[] = [
   { label: 'Contact',         to: '/contact', roles: ['admin'] },
   { label: 'Student Achievements', to: '/achievements', roles: ['teacher'] },
   { label: 'Student Achievements', to: '/achievements', roles: ['admin'] },
+  { label: 'Email Center', to: '/admin/email', roles: ['admin'] },
+  { label: 'Exam Department', to: '/exam', roles: ['exam_department'] },
 ]
 
 function Brand() {

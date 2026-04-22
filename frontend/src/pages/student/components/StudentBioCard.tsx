@@ -83,7 +83,9 @@ export default function StudentBioCard({
             <div className="mt-0.5 grid gap-0.5 text-xs text-slate-600 dark:text-slate-300">
               <div className="truncate">
                 <span className="font-semibold text-slate-500 dark:text-slate-400">Email:</span>{' '}
-                {authUser?.email ?? '—'}
+                {authUser?.email
+                  ? <a href={`mailto:${authUser.email}`} className="hover:underline text-indigo-600 dark:text-indigo-400">{authUser.email}</a>
+                  : '—'}
               </div>
               <div className="truncate">
                 <span className="font-semibold text-slate-500 dark:text-slate-400">Phone:</span>{' '}

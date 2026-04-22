@@ -30,6 +30,8 @@ function TeacherMarkAttendance() {
   const [studentName, setStudentName] = useState('')
   const [pending, setPending] = useState<{ name: string; status: AttendanceStatus }[]>([])
   const [saved, setSaved] = useState<{ studentName: string; date: string; status: AttendanceStatus }[]>([])
+  const [saveError, setSaveError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState('')
   const addToStore = useAttendanceStore(s => s.addRecords)
 
   const { data: courses } = useQuery({
@@ -42,19 +44,25 @@ function TeacherMarkAttendance() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await http.post('/attendance/manual', {
+      const res = await http.post('/attendance/manual', {
         courseId: activeCourseId,
         date,
         students: pending.map(s => ({ studentName: s.name, status: s.status })),
       })
+      return res.data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       const courseName = courseList.find(c => c.id === activeCourseId)?.name
       addToStore(pending.map(s => ({ studentName: s.name, courseId: activeCourseId, date, status: s.status, courseName })))
       setSaved(prev => [...prev, ...pending.map(s => ({ studentName: s.name, date, status: s.status }))])
       setPending([])
-      // Refresh backend attendance records
+      setSaveError('')
+      setSaveSuccess(data?.message ?? `Attendance saved successfully!`)
+      setTimeout(() => setSaveSuccess(''), 4000)
       queryClient.invalidateQueries({ queryKey: ['attendance'] })
+    },
+    onError: (e: any) => {
+      setSaveError(e?.response?.data?.message ?? 'Failed to save attendance. Try again.')
     },
   })
 
@@ -116,7 +124,8 @@ function TeacherMarkAttendance() {
                 className="w-full rounded-2xl bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
                 {saveMutation.isPending ? 'Saving...' : 'Save Attendance'}
               </button>
-              {saveMutation.isError && <p className="text-xs text-rose-600">Failed to save. Try again.</p>}
+              {saveError && <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-600 dark:bg-rose-950/30">{saveError}</p>}
+              {saveSuccess && <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-600 dark:bg-emerald-950/30">✓ {saveSuccess}</p>}
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">Add student names above, then set their status.</p>

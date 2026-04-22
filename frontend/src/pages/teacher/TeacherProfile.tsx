@@ -271,7 +271,9 @@ export default function TeacherProfile() {
               ].map(row => (
                 <div key={row.label}>
                   <Label>{row.label}</Label>
-                  <Val v={row.value} />
+                  {row.label === 'Email' && row.value
+                    ? <a href={`mailto:${row.value}`} className="text-sm text-indigo-400 hover:underline">{row.value}</a>
+                    : <Val v={row.value} />}
                 </div>
               ))}
             </div>

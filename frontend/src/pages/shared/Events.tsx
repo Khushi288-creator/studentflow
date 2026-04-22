@@ -30,19 +30,36 @@ export default function Events() {
 
   const createMutation = useMutation({
     mutationFn: async () => (await http.post('/events', form)).data,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); setModalMode('none'); setForm({ ...emptyForm }); setError('') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      queryClient.invalidateQueries({ queryKey: ['adminSummary'] })
+      queryClient.invalidateQueries({ queryKey: ['teacherUpcomingEvents'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboardEvents'] })
+      setModalMode('none'); setForm({ ...emptyForm }); setError('')
+    },
     onError: (e: any) => setError(e?.response?.data?.message ?? 'Failed'),
   })
 
   const editMutation = useMutation({
     mutationFn: async () => (await http.put(`/events/${editItem!.id}`, form)).data,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); setModalMode('none'); setEditItem(null); setForm({ ...emptyForm }); setError('') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      queryClient.invalidateQueries({ queryKey: ['adminSummary'] })
+      queryClient.invalidateQueries({ queryKey: ['teacherUpcomingEvents'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboardEvents'] })
+      setModalMode('none'); setEditItem(null); setForm({ ...emptyForm }); setError('')
+    },
     onError: (e: any) => setError(e?.response?.data?.message ?? 'Failed'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => (await http.delete(`/events/${id}`)).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      queryClient.invalidateQueries({ queryKey: ['adminSummary'] })
+      queryClient.invalidateQueries({ queryKey: ['teacherUpcomingEvents'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboardEvents'] })
+    },
   })
 
   const registerMutation = useMutation({
@@ -131,17 +148,22 @@ export default function Events() {
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 dark:bg-black/30 dark:bg-black/50 p-4 backdrop-blur-sm"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
           onClick={closeModal}>
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950 overflow-y-auto max-h-[90vh]"
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950 flex flex-col"
+            style={{ maxHeight: 'min(90vh, 680px)', marginTop: 'auto', marginBottom: 'auto' }}
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+
+            {/* Fixed header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                 {modalMode === 'create' ? 'Add Event' : 'Edit Event'}
               </h2>
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-700 text-xl leading-none">✕</button>
             </div>
 
+            {/* Scrollable body */}
+            <div className="overflow-y-auto px-6 pb-6 flex-1">
             {error && <div className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-600 dark:bg-rose-950/30">{error}</div>}
 
             <div className="text-xs font-semibold text-slate-400 uppercase mb-2">Event Details</div>
@@ -160,12 +182,8 @@ export default function Events() {
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Time <span className="text-slate-400 font-normal">(optional)</span>
                 </span>
-                <input
-                  value={form.time}
-                  onChange={e => setForm(p => ({ ...p, time: e.target.value }))}
-                  type="time"
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
-                />
+                <input value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} type="time"
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50" />
                 {form.time && (
                   <span className="text-[11px] text-indigo-500">
                     🕒 {new Date(`1970-01-01T${form.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
@@ -200,6 +218,7 @@ export default function Events() {
               className="w-full rounded-2xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
               {isPending ? 'Saving...' : modalMode === 'create' ? 'Add Event' : 'Save Changes'}
             </button>
+            </div>
           </div>
         </div>
       )}

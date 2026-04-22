@@ -42,9 +42,8 @@ router.get('/skill-hub/activities', authenticateJWT, async (req, res) => {
   const userId = req.auth!.userId
   const myEnrollments = await prisma.activityEnrollment.findMany({
     where: { studentId: userId },
-    select: { activityId: true, paymentStatus: true, rating: true },
   })
-  const enrollMap = new Map(myEnrollments.map(e => [e.activityId, e]))
+  const enrollMap = new Map<string, any>(myEnrollments.map((e: any) => [e.activityId, e]))
 
   res.json({
     activities: activities.map(a => ({
@@ -60,11 +59,11 @@ router.get('/skill-hub/activities', authenticateJWT, async (req, res) => {
       level: a.level,
       batch: a.batch,
       icon: a.icon,
-      faculty: a.faculty[0] ?? null,
-      enrolledCount: a.enrollments.length,
+      faculty: (a as any).faculty?.[0] ?? null,
+      enrolledCount: (a as any).enrollments?.length ?? 0,
       isEnrolled: enrollMap.has(a.id),
-      paymentStatus: enrollMap.get(a.id)?.paymentStatus ?? null,
-      myRating: enrollMap.get(a.id)?.rating ?? null,
+      paymentStatus: (enrollMap.get(a.id) as any)?.paymentStatus ?? null,
+      myRating: (enrollMap.get(a.id) as any)?.rating ?? null,
     })),
   })
 })

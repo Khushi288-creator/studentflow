@@ -176,20 +176,36 @@ router.delete('/admin/students/:id', authenticateJWT, requireRole(['admin']), as
 
 // ── GET teachers ──────────────────────────────────────────────────────────
 router.get('/admin/teachers', authenticateJWT, requireRole(['admin']), async (_req, res) => {
-  const users = await prisma.user.findMany({
-    where: { role: 'teacher' },
-    select: {
-      id: true, name: true, email: true, role: true,
-      teacher: { select: { id: true, subject: true, phone: true, address: true, bloodType: true, birthday: true, sex: true, photoUrl: true } },
-    },
-  })
+  const UserModel = require('../models/User').default
+  const TeacherModel = require('../models/Teacher').default
+
+  const users = await UserModel.find({ role: 'teacher' }).lean()
+  const userIds = users.map((u: any) => u._id?.toString())
+  const profiles = await TeacherModel.find({ userId: { $in: userIds } }).lean()
+  const profileMap = Object.fromEntries(profiles.map((p: any) => [p.userId?.toString(), p]))
+
   res.json({
-    teachers: users.map((u) => ({
-      id: u.id, name: u.name, email: u.email, role: u.role,
-      uniqueId: u.email.endsWith('@school.local') ? u.email.replace('@school.local', '') : null,
-      subject: u.teacher?.subject ?? null,
-      profile: u.teacher,
-    })),
+    teachers: users.map((u: any) => {
+      const profile = profileMap[u._id?.toString()]
+      return {
+        id: u._id?.toString(),
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        uniqueId: u.uniqueId ?? null,
+        subject: profile?.subject ?? null,
+        profile: profile ? {
+          id: profile._id?.toString(),
+          subject: profile.subject,
+          phone: profile.phone,
+          address: profile.address,
+          bloodType: profile.bloodType,
+          birthday: profile.birthday,
+          sex: profile.sex,
+          photoUrl: profile.photoUrl,
+        } : null,
+      }
+    }),
   })
 })
 
@@ -259,14 +275,24 @@ router.delete('/admin/teachers/:id', authenticateJWT, requireRole(['admin']), as
 })
 
 router.get('/admin/courses', authenticateJWT, requireRole(['admin']), async (_req, res) => {
-  const courses = await prisma.course.findMany({
-    include: { teacher: { include: { user: { select: { name: true } } } } },
-  })
+  const CourseModel = require('../models/Course').default
+  const TeacherModel = require('../models/Teacher').default
+  const UserModel = require('../models/User').default
+
+  const courses = await CourseModel.find({}).lean()
+  const teacherIds = [...new Set(courses.map((c: any) => c.teacherId).filter(Boolean))]
+  const teachers = teacherIds.length ? await TeacherModel.find({ _id: { $in: teacherIds } }).lean() : []
+  const userIds = teachers.map((t: any) => t.userId?.toString()).filter(Boolean)
+  const users = userIds.length ? await UserModel.find({ _id: { $in: userIds } }).lean() : []
+
+  const userMap = Object.fromEntries(users.map((u: any) => [u._id?.toString(), u.name]))
+  const teacherMap = Object.fromEntries(teachers.map((t: any) => [t._id?.toString(), userMap[t.userId?.toString()] ?? '—']))
+
   res.json({
-    courses: courses.map((c) => ({
-      id: c.id,
+    courses: courses.map((c: any) => ({
+      id: c._id?.toString(),
       name: c.name,
-      teacherName: c.teacher.user.name,
+      teacherName: teacherMap[c.teacherId?.toString()] ?? '—',
     })),
   })
 })
@@ -313,6 +339,29 @@ router.post('/admin/notices', authenticateJWT, requireRole(['admin']), async (re
   } catch (err) {
     console.error('[POST /admin/notices]', err)
     res.status(500).json({ message: 'Failed to create notice' })
+  }
+})
+
+// ── CREATE exam_department user ───────────────────────────────────────────
+router.post('/admin/exam-department', authenticateJWT, requireRole(['admin']), async (req, res) => {
+  try {
+    const schema = z.object({ name: z.string().min(2), password: z.string().min(6) })
+    const parsed = schema.safeParse(req.body)
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message })
+
+    const UserModel = require('../models/User').default
+    const count = await UserModel.countDocuments({ role: 'exam_department' })
+    const uniqueId = `EXM${String(count + 1).padStart(3, '0')}`
+    const email = `${uniqueId}@school.local`
+
+    const hash = await bcrypt.hash(parsed.data.password, 12)
+    const user = await UserModel.create({
+      name: parsed.data.name, email, password: hash,
+      role: 'exam_department', uniqueId,
+    })
+    res.status(201).json({ user: { id: user._id.toString(), name: user.name, uniqueId, loginId: uniqueId } })
+  } catch (err: any) {
+    res.status(500).json({ message: err?.message })
   }
 })
 

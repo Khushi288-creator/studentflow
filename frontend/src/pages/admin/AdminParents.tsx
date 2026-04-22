@@ -194,8 +194,28 @@ export default function AdminParents() {
               )}
               <label className="grid gap-1">
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Phone</span>
-                <input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="10-digit number"
-                  className="h-10 rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 px-3 text-sm text-white outline-none focus:border-pink-500 placeholder:text-slate-400 dark:placeholder:text-slate-600" />
+                <div className="relative">
+                  <input
+                    value={form.phone}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      setForm(p => ({ ...p, phone: val }))
+                    }}
+                    placeholder="10-digit number"
+                    maxLength={10}
+                    inputMode="numeric"
+                    className={`h-10 w-full rounded-xl border px-3 pr-8 text-sm outline-none focus:border-pink-500 placeholder:text-slate-400 dark:placeholder:text-slate-600
+                      ${form.phone.length === 0 ? 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 text-slate-900 dark:text-white'
+                        : form.phone.length === 10 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-slate-900 dark:text-white'
+                        : 'border-rose-500 bg-rose-50 dark:bg-rose-500/10 text-slate-900 dark:text-white'}`}
+                  />
+                  {form.phone.length === 10 && (
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-500 text-sm">✅</span>
+                  )}
+                </div>
+                {form.phone.length > 0 && form.phone.length !== 10 && (
+                  <span className="text-xs font-semibold text-rose-500">❌ Invalid! Contact must be exactly 10 digits ({form.phone.length}/10)</span>
+                )}
               </label>
               <label className="grid gap-1">
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Link to Student</span>
@@ -214,8 +234,17 @@ export default function AdminParents() {
 
             <div className="flex gap-2">
               <button type="button"
-                disabled={modal === 'create' ? createMut.isPending : editMut.isPending}
-                onClick={() => modal === 'create' ? createMut.mutate() : editMut.mutate()}
+                disabled={
+                  (modal === 'create' ? createMut.isPending : editMut.isPending) ||
+                  (form.phone.length > 0 && form.phone.length !== 10)
+                }
+                onClick={() => {
+                  if (form.phone.length > 0 && form.phone.length !== 10) {
+                    alert('❌ Invalid! Contact must be exactly 10 digits')
+                    return
+                  }
+                  modal === 'create' ? createMut.mutate() : editMut.mutate()
+                }}
                 className="flex-1 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 py-2.5 text-sm font-semibold text-white hover:from-pink-500 hover:to-rose-500 disabled:opacity-40 transition-all shadow-lg">
                 {modal === 'create' ? (createMut.isPending ? 'Creating...' : 'Create Parent') : (editMut.isPending ? 'Saving...' : 'Save Changes')}
               </button>

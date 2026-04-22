@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 
 import { prisma } from '../lib/prisma'
 import { authenticateJWT } from '../middleware/auth'
-import { Role } from '../../generated/prisma/enums'
+import type { Role } from '../types/roles'
 
 import crypto from 'crypto'
 
@@ -143,10 +143,10 @@ router.post('/auth/reset-password', async (req, res) => {
     if (resetToken.expiresAt < new Date()) return res.status(400).json({ message: 'Reset token expired' })
 
     const passwordHash = await bcrypt.hash(newPassword, 12)
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: resetToken.userId }, data: { password: passwordHash } }),
-      prisma.passwordResetToken.update({ where: { id: resetToken.id }, data: { usedAt: new Date() } }),
-    ])
+    await prisma.$transaction(async (tx: any) => {
+      await tx.user.update({ where: { id: resetToken.userId }, data: { password: passwordHash } })
+      await tx.passwordResetToken.update({ where: { id: resetToken.id }, data: { usedAt: new Date() } })
+    })
     res.json({ ok: true })
   } catch (err: any) {
     console.error('[POST /auth/reset-password]', err?.message)

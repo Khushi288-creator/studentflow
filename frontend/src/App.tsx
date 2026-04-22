@@ -16,6 +16,8 @@ import AdminSalary from './pages/admin/AdminSalary'
 import AdminTimetable from './pages/admin/AdminTimetable'
 import AdminSkillHub from './pages/admin/AdminSkillHub'
 import AdminParents from './pages/admin/AdminParents'
+import AdminEmail from './pages/admin/AdminEmail'
+import ExamDepartmentDashboard from './pages/exam/ExamDepartmentDashboard'
 import SkillHub from './pages/student/SkillHub'
 import ParentDashboard from './pages/parent/ParentDashboard'
 import Courses from './pages/shared/Courses'
@@ -42,6 +44,7 @@ function DashboardSwitch() {
   if (user.role === 'student') return <StudentDashboard />
   if (user.role === 'teacher') return <TeacherDashboard />
   if (user.role === 'parent') return <ParentDashboard />
+  if (user.role === 'exam_department') return <ExamDepartmentDashboard />
   return <AdminDashboard />
 }
 
@@ -92,7 +95,7 @@ export default function App() {
       {/* Authenticated app (dashboard layout) */}
       <Route
         element={
-          <RequireRole roles={['student', 'teacher', 'admin', 'parent']}>
+          <RequireRole roles={['student', 'teacher', 'admin', 'parent', 'exam_department']}>
             <DashboardLayout />
           </RequireRole>
         }
@@ -117,6 +120,8 @@ export default function App() {
         <Route path="/admin/timetable" element={<AdminTimetable />} />
         <Route path="/admin/skill-hub" element={<AdminSkillHub />} />
         <Route path="/admin/parents" element={<AdminParents />} />
+        <Route path="/admin/email" element={<AdminEmail />} />
+        <Route path="/exam" element={<ExamDepartmentDashboard />} />
         <Route path="/skill-hub" element={<SkillHub />} />
         <Route path="/salary" element={<TeacherSalary />} />
       </Route>

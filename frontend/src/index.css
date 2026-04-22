@@ -17,6 +17,19 @@ body,
   height: 100%;
 }
 
+/* Light mode: ALL text must be black */
+:root:not(.dark) * {
+  color: #000000 !important;
+}
+/* Keep white text on colored/dark buttons and badges */
+:root:not(.dark) .text-white { color: #ffffff !important; }
+:root:not(.dark) [class*="bg-indigo"] *,
+:root:not(.dark) [class*="bg-violet"] *,
+:root:not(.dark) [class*="bg-rose"] *,
+:root:not(.dark) [class*="bg-emerald"] *,
+:root:not(.dark) [class*="bg-amber"] *,
+:root:not(.dark) [class*="bg-gradient"] * { color: inherit; }
+
 /* Light mode: clean white/slate background */
 body {
   @apply bg-slate-100 text-slate-900;

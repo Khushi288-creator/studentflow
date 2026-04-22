@@ -38,6 +38,7 @@ export type EventRow = {
   title: string
   date: string
   description?: string
+  time?: string
 }
 
 export type FeeRow = {
@@ -91,10 +92,11 @@ export function useStudentDashboardData() {
   const eventsQuery = useQuery({
     queryKey: ['dashboardEvents'],
     queryFn: async () => {
-      const res = await http.get('/events')
+      const res = await http.get('/events/upcoming')
       return res.data as { events?: EventRow[] }
     },
     retry: false,
+    refetchInterval: 30000,
   })
 
   const holidaysQuery = useQuery({

@@ -1,6 +1,6 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import jwt from 'jsonwebtoken'
-import { Role } from '../../generated/prisma/enums'
+import type { Role } from '../types/roles'
 
 export type AuthUser = {
   userId: string
@@ -40,4 +40,3 @@ export function requireRole(roles: Role[]) {
     next()
   }
 }
-
