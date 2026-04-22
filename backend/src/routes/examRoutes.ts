@@ -31,26 +31,126 @@ async function notifyUser(userId: string, title: string, description: string) {
 // EXAM MANAGEMENT — exam_department only
 // ══════════════════════════════════════════════════════════════════════════
 
+// GET /exam/subjects-by-class/:classNum — fetch subjects for a class
+router.get('/exam/subjects-by-class/:classNum', authenticateJWT, requireRole(['exam_department', 'admin']), async (req, res) => {
+  try {
+    const classNum = parseInt(req.params.classNum)
+    if (isNaN(classNum) || classNum < 4 || classNum > 8) {
+      return res.status(400).json({ message: 'Class must be between 4 and 8' })
+    }
+
+    const ClassSubjectsModel = require('../models/ClassSubjects').default
+    const doc = await ClassSubjectsModel.findOne({ class: classNum }).lean()
+    
+    if (!doc) {
+      return res.json({ subjects: [] })
+    }
+
+    res.json({
+      subjects: doc.subjects.map((s: any) => s.name),
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err?.message })
+  }
+})
+
+// Helper function to check date overlap
+function hasDateOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
+  const s1 = new Date(start1)
+  const e1 = new Date(end1)
+  const s2 = new Date(start2)
+  const e2 = new Date(end2)
+  
+  // Check if date ranges overlap
+  // Overlap occurs if: start1 <= end2 AND end1 >= start2
+  return s1 <= e2 && e1 >= s2
+}
+
+// Helper function to check time overlap (if time is specified)
+function hasTimeOverlap(time1?: string, time2?: string): boolean {
+  // If either exam doesn't have time specified, consider it as potential overlap
+  if (!time1 || !time2) return true
+  
+  // If both have same time string, it's definitely an overlap
+  if (time1 === time2) return true
+  
+  // For simplicity, if both have time specified and dates overlap, consider it a clash
+  // In a real system, you'd parse the time ranges and check for overlap
+  return true
+}
+
 // POST /exam/create
 router.post('/exam/create', authenticateJWT, requireRole(['exam_department']), async (req, res) => {
   try {
     const schema = z.object({
       name:      z.string().min(2, 'Exam name required'),
       className: z.string().min(1, 'Class required'),
-      subjects:  z.array(z.string()).min(1, 'At least one subject required'),
+      subject:   z.string().min(1, 'Subject required'),
+      subjects:  z.array(z.string()).optional(), // kept for backward compatibility
       startDate: z.string().min(1),
       endDate:   z.string().min(1),
+      time:      z.string().optional(),
     })
     const parsed = schema.safeParse(req.body)
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message })
 
+    const { name, className, subject, startDate, endDate, time } = parsed.data
+
+    // Validation 1: Check for same class + same subject + overlapping dates
+    const sameSubjectExams = await ExamModel.find({
+      className,
+      subject,
+      status: { $in: ['upcoming', 'ongoing'] },
+    }).lean()
+
+    for (const existing of sameSubjectExams as any[]) {
+      if (hasDateOverlap(startDate, endDate, existing.startDate, existing.endDate)) {
+        return res.status(409).json({
+          message: `Exam for ${subject} in ${className} already scheduled during this period (${existing.startDate} to ${existing.endDate})`,
+        })
+      }
+    }
+
+    // Validation 2: Check for same class + overlapping date/time (any subject)
+    // This prevents scheduling multiple exams for the same class at the same time
+    const sameClassExams = await ExamModel.find({
+      className,
+      status: { $in: ['upcoming', 'ongoing'] },
+    }).lean()
+
+    for (const existing of sameClassExams as any[]) {
+      // Check if dates overlap
+      if (hasDateOverlap(startDate, endDate, existing.startDate, existing.endDate)) {
+        // If dates overlap, check if times also overlap
+        if (hasTimeOverlap(time, existing.time)) {
+          return res.status(409).json({
+            message: `Exam already scheduled for ${className} at this time. Existing exam: "${existing.name}" (${existing.subject}) from ${existing.startDate} to ${existing.endDate}${existing.time ? ` at ${existing.time}` : ''}`,
+          })
+        }
+      }
+    }
+
     const exam = await ExamModel.create({
-      ...parsed.data,
+      name,
+      className,
+      subject,
+      subjects: parsed.data.subjects ?? [], // backward compatibility
+      startDate,
+      endDate,
+      time,
       status: 'upcoming',
       createdBy: req.auth!.userId,
     })
 
-    res.status(201).json({ exam: { id: exam._id.toString(), name: exam.name, className: exam.className, status: exam.status } })
+    res.status(201).json({
+      exam: {
+        id: exam._id.toString(),
+        name: exam.name,
+        className: exam.className,
+        subject: exam.subject,
+        status: exam.status,
+      },
+    })
   } catch (err: any) {
     res.status(500).json({ message: err?.message })
   }
@@ -65,9 +165,11 @@ router.get('/exam/list', authenticateJWT, requireRole(['exam_department', 'admin
         id: e._id.toString(),
         name: e.name,
         className: e.className,
-        subjects: e.subjects,
+        subject: e.subject ?? null,
+        subjects: e.subjects ?? [], // backward compatibility
         startDate: e.startDate,
         endDate: e.endDate,
+        time: e.time ?? null,
         status: e.status,
       })),
     })

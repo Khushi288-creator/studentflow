@@ -28,6 +28,7 @@ import assistantRoutes from './routes/assistantRoutes'
 import parentRoutes from './routes/parentRoutes'
 import emailRoutes from './routes/emailRoutes'
 import examRoutes from './routes/examRoutes'
+import classSubjectsRoutes from './routes/classSubjectsRoutes'
 
 export const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api', assistantRoutes)
 app.use('/api', parentRoutes)
 app.use('/api', emailRoutes)
 app.use('/api', examRoutes)
+app.use('/api', classSubjectsRoutes)
 
 // Basic error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

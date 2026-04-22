@@ -5,6 +5,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Child = { id: string; name: string; className: string | null; photoUrl: string | null; gender: string | null }
+type ExamResult = {
+  id: string; examId: string; examName: string; className: string
+  subjects: { courseId: string; courseName: string; marks: number; maxMarks: number; grade: string }[]
+  totalMarks: number; maxTotalMarks: number; percentage: number; grade: string; rank: number | null
+}
 type DashData = {
   child: Child | null
   attendance: { total: number; present: number; percentage: number }
@@ -73,6 +78,11 @@ export default function ParentDashboard() {
   const dashQ = useQuery({
     queryKey: ['parentDashboard'],
     queryFn: async () => (await http.get('/parents/dashboard')).data as DashData,
+  })
+
+  const examResultsQ = useQuery({
+    queryKey: ['parentExamResults'],
+    queryFn: async () => (await http.get('/result/my')).data as { results: ExamResult[] },
   })
 
   const meetingsQ = useQuery({
@@ -355,6 +365,54 @@ export default function ParentDashboard() {
                 }
               </HoverCard>
             </div>
+
+            {/* Exam Results — published by Exam Department */}
+            {(examResultsQ.data?.results ?? []).length > 0 && (
+              <div className="space-y-3">
+                <SectionTitle icon="📊" title="Exam Results" />
+                {(examResultsQ.data?.results ?? []).map((r: ExamResult) => (
+                  <HoverCard key={r.id}>
+                    <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
+                      <div>
+                        <div className="text-sm font-bold text-slate-900 dark:text-white">{r.examName}</div>
+                        <div className="text-xs text-slate-500">{r.className}</div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <div className={`text-xl font-black ${r.percentage >= 60 ? 'text-emerald-400' : 'text-rose-400'}`}>{r.percentage}%</div>
+                          <div className="text-[10px] text-slate-500">Percentage</div>
+                        </div>
+                        <div className="text-center">
+                          <div className={`text-xl font-black ${r.grade === 'A+' || r.grade === 'A' ? 'text-emerald-400' : r.grade.startsWith('B') ? 'text-indigo-400' : 'text-amber-400'}`}>{r.grade}</div>
+                          <div className="text-[10px] text-slate-500">Grade</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-black text-slate-900 dark:text-white">{r.totalMarks}/{r.maxTotalMarks}</div>
+                          <div className="text-[10px] text-slate-500">Total</div>
+                        </div>
+                        {r.rank && (
+                          <div className="text-center">
+                            <div className="text-xl font-black text-amber-400">#{r.rank}</div>
+                            <div className="text-[10px] text-slate-500">Rank</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      {r.subjects.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between py-1 border-b border-white/5 last:border-0">
+                          <span className="text-xs text-slate-600 dark:text-slate-300">{s.courseName}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-900 dark:text-white">{s.marks}/{s.maxMarks}</span>
+                            <Badge color={s.grade === 'A+' || s.grade === 'A' ? 'green' : s.grade.startsWith('B') ? 'indigo' : 'amber'}>{s.grade}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </HoverCard>
+                ))}
+              </div>
+            )}
 
             {/* Achievements + Skill Hub */}
             <div className="grid gap-4 sm:grid-cols-2">

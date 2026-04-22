@@ -17,6 +17,7 @@ import AdminTimetable from './pages/admin/AdminTimetable'
 import AdminSkillHub from './pages/admin/AdminSkillHub'
 import AdminParents from './pages/admin/AdminParents'
 import AdminEmail from './pages/admin/AdminEmail'
+import AdminClassSubjects from './pages/admin/AdminClassSubjects'
 import ExamDepartmentDashboard from './pages/exam/ExamDepartmentDashboard'
 import SkillHub from './pages/student/SkillHub'
 import ParentDashboard from './pages/parent/ParentDashboard'
@@ -121,6 +122,7 @@ export default function App() {
         <Route path="/admin/skill-hub" element={<AdminSkillHub />} />
         <Route path="/admin/parents" element={<AdminParents />} />
         <Route path="/admin/email" element={<AdminEmail />} />
+        <Route path="/admin/class-subjects" element={<AdminClassSubjects />} />
         <Route path="/exam" element={<ExamDepartmentDashboard />} />
         <Route path="/skill-hub" element={<SkillHub />} />
         <Route path="/salary" element={<TeacherSalary />} />

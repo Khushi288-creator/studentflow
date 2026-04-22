@@ -32,6 +32,7 @@ const items: Item[] = [
   { label: 'Student Achievements', to: '/achievements', roles: ['teacher'] },
   { label: 'Student Achievements', to: '/achievements', roles: ['admin'] },
   { label: 'Email Center', to: '/admin/email', roles: ['admin'] },
+  { label: 'Class Subjects', to: '/admin/class-subjects', roles: ['admin'] },
   { label: 'Exam Department', to: '/exam', roles: ['exam_department'] },
 ]
 
