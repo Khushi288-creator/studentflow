@@ -9,18 +9,18 @@ import CourseModel from '../models/Course'
 import TeacherModel from '../models/Teacher'
 import StudentProfileModel from '../models/StudentProfile'
 import NoticeModel from '../models/Notice'
+import { prisma } from '../lib/prisma'
 
 const router = express.Router()
 
 // ── helpers ────────────────────────────────────────────────────────────────
+// Grade scale for exam department:
+// A: >= 90  |  B: >= 75  |  C: >= 50  |  D: < 50
 function gradeFromPct(pct: number): string {
-  if (pct >= 90) return 'A+'
-  if (pct >= 80) return 'A'
-  if (pct >= 70) return 'B+'
-  if (pct >= 60) return 'B'
+  if (pct >= 90) return 'A'
+  if (pct >= 75) return 'B'
   if (pct >= 50) return 'C'
-  if (pct >= 40) return 'D'
-  return 'F'
+  return 'D'
 }
 
 async function notifyUser(userId: string, title: string, description: string) {
@@ -31,7 +31,29 @@ async function notifyUser(userId: string, title: string, description: string) {
 // EXAM MANAGEMENT — exam_department only
 // ══════════════════════════════════════════════════════════════════════════
 
-// GET /exam/subjects-by-class/:classNum — fetch subjects for a class
+// GET /exam/students-by-class/:className — teacher fetches students of a class
+router.get('/exam/students-by-class/:className', authenticateJWT, requireRole(['teacher', 'exam_department', 'admin']), async (req, res) => {
+  try {
+    const className = decodeURIComponent(req.params.className)
+    if (!className) return res.status(400).json({ message: 'className required' })
+
+    const students = await prisma.user.findMany({
+      where: { role: 'student', studentProfile: { className } },
+      select: { id: true, name: true, studentProfile: { select: { className: true } } },
+      orderBy: { name: 'asc' },
+    })
+
+    res.json({
+      students: students.map(s => ({
+        id: s.id,
+        name: s.name,
+        className: s.studentProfile?.className ?? null,
+      })),
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err?.message })
+  }
+})
 router.get('/exam/subjects-by-class/:classNum', authenticateJWT, requireRole(['exam_department', 'admin']), async (req, res) => {
   try {
     const classNum = parseInt(req.params.classNum)
@@ -327,7 +349,7 @@ router.post('/result/publish', authenticateJWT, requireRole(['exam_department'])
     const courses = await CourseModel.find({ _id: { $in: courseIds } }).lean()
     const courseNameMap = new Map(courses.map((c: any) => [c._id.toString(), c.name]))
 
-    // Compute ranks — sort by percentage desc
+    // Compute ranks — sort by percentage desc, handle ties (same % = same rank)
     const studentResults: { userId: string; pct: number }[] = []
     for (const [userId, marks] of studentMap.entries()) {
       const total = marks.reduce((a: number, m: any) => a + m.marks, 0)
@@ -335,7 +357,21 @@ router.post('/result/publish', authenticateJWT, requireRole(['exam_department'])
       studentResults.push({ userId, pct: maxTotal > 0 ? (total / maxTotal) * 100 : 0 })
     }
     studentResults.sort((a, b) => b.pct - a.pct)
-    const rankMap = new Map(studentResults.map((s, i) => [s.userId, i + 1]))
+
+    // Assign ranks with tie handling: same percentage → same rank
+    // e.g. [95, 90, 90, 80] → ranks [1, 2, 2, 4]
+    const rankMap = new Map<string, number>()
+    let currentRank = 1
+    for (let i = 0; i < studentResults.length; i++) {
+      if (i > 0 && studentResults[i].pct === studentResults[i - 1].pct) {
+        // Tie: assign same rank as previous
+        rankMap.set(studentResults[i].userId, rankMap.get(studentResults[i - 1].userId)!)
+      } else {
+        // No tie: rank = actual position (1-based)
+        currentRank = i + 1
+        rankMap.set(studentResults[i].userId, currentRank)
+      }
+    }
 
     const published: string[] = []
     for (const [studentUserId, marks] of studentMap.entries()) {

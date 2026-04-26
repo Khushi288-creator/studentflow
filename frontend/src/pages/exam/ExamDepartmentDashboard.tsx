@@ -22,10 +22,10 @@ function Toast({ msg, type, onClose }: { msg: string; type: 'success' | 'error';
 }
 
 function gradeColor(g: string) {
-  if (g === 'A+' || g === 'A') return 'text-emerald-400'
-  if (g.startsWith('B')) return 'text-indigo-400'
+  if (g === 'A') return 'text-emerald-400'
+  if (g === 'B') return 'text-indigo-400'
   if (g === 'C') return 'text-amber-400'
-  return 'text-rose-400'
+  return 'text-rose-400'  // D
 }
 
 export default function ExamDepartmentDashboard() {

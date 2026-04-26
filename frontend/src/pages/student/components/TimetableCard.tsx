@@ -34,20 +34,20 @@ function CompactTable({ rows }: { rows: TimetableEntry[] }) {
   return (
     <div className="grid gap-2">
       <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+        <div className="col-span-3">Day</div>
         <div className="col-span-4">Subject</div>
-        <div className="col-span-3">Class</div>
         <div className="col-span-3">Time</div>
-        <div className="col-span-2 text-right">Date</div>
+        <div className="col-span-2 text-right">Teacher</div>
       </div>
       {limited.map((r, idx) => (
         <div
           key={r.id ?? idx}
           className="grid grid-cols-12 items-center gap-2 rounded-xl border border-slate-200 dark:border-white/8 bg-white/5 px-3 py-2 text-xs transition-colors hover:bg-slate-100 dark:hover:bg-white/8"
         >
+          <div className="col-span-3 truncate font-semibold text-indigo-600 dark:text-indigo-400">{(r as any).day ?? r.date ?? '—'}</div>
           <div className="col-span-4 truncate font-semibold text-slate-900 dark:text-slate-50">{r.subject ?? '—'}</div>
-          <div className="col-span-3 truncate text-slate-600 dark:text-slate-300">{r.class ? `Class ${r.class}` : '—'}</div>
           <div className="col-span-3 truncate text-slate-600 dark:text-slate-300">{r.time ?? '—'}</div>
-          <div className="col-span-2 truncate text-right text-slate-500 dark:text-slate-400">{r.date ?? '—'}</div>
+          <div className="col-span-2 truncate text-right text-slate-500 dark:text-slate-400">{(r as any).teacherName ?? '—'}</div>
         </div>
       ))}
       {extra > 0 ? <div className="text-[11px] text-slate-500 dark:text-slate-400">+ {extra} more</div> : null}

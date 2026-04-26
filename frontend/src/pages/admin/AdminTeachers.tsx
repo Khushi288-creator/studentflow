@@ -133,7 +133,7 @@ export default function AdminTeachers() {
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800">
                 <th className="py-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">#</th>
-                <th className="py-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Login ID</th>
+                <th className="py-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Teacher ID</th>
                 <th className="py-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Name</th>
                 <th className="py-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Subject</th>
                 <th className="py-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Phone</th>
@@ -151,7 +151,9 @@ export default function AdminTeachers() {
                       {t.uniqueId ?? '—'}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 font-medium text-slate-900 dark:text-slate-50">{t.name}</td>
+                  <td className="py-3 pr-4">
+                    <div className="font-medium text-slate-900 dark:text-slate-50">{t.name}</div>
+                  </td>
                   <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{t.profile?.subject ?? t.subject ?? '—'}</td>
                   <td className="py-3 pr-4 text-slate-500 text-xs">{t.profile?.phone ?? '—'}</td>
                   <td className="py-3 pr-4 text-slate-500 text-xs max-w-[120px] truncate">{t.profile?.address ?? '—'}</td>

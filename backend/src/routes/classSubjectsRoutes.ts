@@ -321,4 +321,57 @@ router.get('/subjects/my-assigned', authenticateJWT, requireRole(['teacher']), a
   }
 })
 
+// ── GET /subjects/teacher-by-subject — auto-fetch teacher for a subject ───
+router.get('/subjects/teacher-by-subject', authenticateJWT, async (req, res) => {
+  try {
+    const schema = z.object({
+      class: z.string().min(1),
+      subject: z.string().min(1),
+    })
+    const parsed = schema.safeParse(req.query)
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message })
+
+    const { class: classNum, subject } = parsed.data
+    const classNumber = parseInt(classNum)
+    
+    if (isNaN(classNumber) || classNumber < 4 || classNumber > 8) {
+      return res.status(400).json({ message: 'Class must be between 4 and 8' })
+    }
+
+    const doc = await ClassSubjectsModel.findOne({ class: classNumber })
+    if (!doc) {
+      return res.status(404).json({ message: 'Class not found' })
+    }
+
+    // Find the subject (case-insensitive)
+    const subjectData = doc.subjects.find(
+      (s: any) => s.name.toLowerCase() === subject.toLowerCase()
+    )
+
+    if (!subjectData) {
+      return res.status(404).json({ message: `Subject "${subject}" not found in Class ${classNumber}` })
+    }
+
+    // If no teacher assigned, return null
+    if (!subjectData.teacherId) {
+      return res.json({ teacherId: null, teacherName: null })
+    }
+
+    // Fetch teacher details
+    const UserModel = require('../models/User').default
+    const teacher = await UserModel.findById(subjectData.teacherId)
+    
+    if (!teacher) {
+      return res.json({ teacherId: null, teacherName: null })
+    }
+
+    res.json({
+      teacherId: subjectData.teacherId,
+      teacherName: teacher.name,
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err?.message })
+  }
+})
+
 export default router

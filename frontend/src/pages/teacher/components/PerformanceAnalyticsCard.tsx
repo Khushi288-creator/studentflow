@@ -26,12 +26,10 @@ const COLORS = {
 }
 
 const GRADE_COLORS = {
-  'A+': '#22c55e',
-  'A': '#84cc16', 
-  'B+': '#eab308',
-  'B': '#f59e0b',
-  'C': '#f97316',
-  'F': '#ef4444'
+  'A': '#22c55e',
+  'B': '#6366f1',
+  'C': '#eab308',
+  'D': '#ef4444',
 }
 
 function Empty({ text = 'No data available yet' }: { text?: string }) {

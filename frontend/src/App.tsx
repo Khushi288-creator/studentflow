@@ -14,10 +14,13 @@ import AdminTeachers from './pages/admin/AdminTeachers'
 import AdminSubjects from './pages/admin/AdminSubjects'
 import AdminSalary from './pages/admin/AdminSalary'
 import AdminTimetable from './pages/admin/AdminTimetable'
+import AdminSmartTimetable from './pages/admin/AdminSmartTimetable'
+import AdminWeeklyTimetable from './pages/admin/AdminWeeklyTimetable'
 import AdminSkillHub from './pages/admin/AdminSkillHub'
 import AdminParents from './pages/admin/AdminParents'
 import AdminEmail from './pages/admin/AdminEmail'
 import AdminClassSubjects from './pages/admin/AdminClassSubjects'
+import AdminSchoolConfig from './pages/admin/AdminSchoolConfig'
 import ExamDepartmentDashboard from './pages/exam/ExamDepartmentDashboard'
 import SkillHub from './pages/student/SkillHub'
 import ParentDashboard from './pages/parent/ParentDashboard'
@@ -28,6 +31,7 @@ import Result from './pages/shared/Result'
 import Fee from './pages/shared/Fee'
 import Events from './pages/shared/Events'
 import Holidays from './pages/shared/Holidays'
+import Timetable from './pages/shared/Timetable'
 import Profile from './pages/shared/Profile'
 import Notifications from './pages/shared/Notifications'
 import Contact from './pages/shared/Contact'
@@ -109,6 +113,7 @@ export default function App() {
         <Route path="/fees" element={<Fee />} />
         <Route path="/events" element={<Events />} />
         <Route path="/holidays" element={<Holidays />} />
+        <Route path="/timetable" element={<Timetable />} />
         <Route path="/profile" element={<ProfileSwitch />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/contact" element={<Contact />} />
@@ -119,10 +124,13 @@ export default function App() {
         <Route path="/admin/subjects" element={<AdminSubjects />} />
         <Route path="/admin/salary" element={<AdminSalary />} />
         <Route path="/admin/timetable" element={<AdminTimetable />} />
+        <Route path="/admin/smart-timetable" element={<AdminSmartTimetable />} />
+        <Route path="/admin/weekly-timetable" element={<AdminWeeklyTimetable />} />
         <Route path="/admin/skill-hub" element={<AdminSkillHub />} />
         <Route path="/admin/parents" element={<AdminParents />} />
         <Route path="/admin/email" element={<AdminEmail />} />
         <Route path="/admin/class-subjects" element={<AdminClassSubjects />} />
+        <Route path="/admin/school-config" element={<AdminSchoolConfig />} />
         <Route path="/exam" element={<ExamDepartmentDashboard />} />
         <Route path="/skill-hub" element={<SkillHub />} />
         <Route path="/salary" element={<TeacherSalary />} />

@@ -23,6 +23,11 @@ export default function TeacherBioCard() {
   const photoSrc = t?.photoUrl ?? null
   const showPhoto = !!photoSrc && !imgError
 
+  // Derive Teacher ID from email (e.g. TCH001@school.local → TCH001)
+  const teacherId = user?.email?.endsWith('@school.local')
+    ? user.email.replace('@school.local', '')
+    : null
+
   return (
     <Card className="h-full min-h-0 overflow-hidden">
       <CardHeader title="Teacher Bio" subtitle="Profile & personal details" />
@@ -60,15 +65,18 @@ export default function TeacherBioCard() {
           <div className="mb-1 text-[11px] font-semibold text-slate-500">Personal details</div>
           <div className="grid gap-0.5">
             {[
-              { label: 'Subject', value: t?.subject },
-              { label: 'Gender', value: t?.sex },
+              { label: 'Teacher ID', value: teacherId },
+              { label: 'Subject',    value: t?.subject },
+              { label: 'Gender',     value: t?.sex },
               { label: 'Blood Type', value: t?.bloodType },
-              { label: 'Birthday', value: t?.birthday },
-              { label: 'Address', value: t?.address },
+              { label: 'Birthday',   value: t?.birthday },
+              { label: 'Address',    value: t?.address },
             ].map((row) => (
               <div key={row.label} className="grid grid-cols-[44%_56%] items-baseline gap-x-2 text-[11px] leading-tight">
                 <span className="text-slate-500 dark:text-slate-400">{row.label}</span>
-                <span className="font-medium text-slate-900 dark:text-slate-50 break-words">{val(row.value)}</span>
+                <span className={`font-medium break-words ${row.label === 'Teacher ID' ? 'font-mono text-violet-600 dark:text-violet-400' : 'text-slate-900 dark:text-slate-50'}`}>
+                  {val(row.value)}
+                </span>
               </div>
             ))}
           </div>

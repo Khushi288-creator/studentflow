@@ -355,7 +355,7 @@ export default function ParentDashboard() {
                           <div className="text-xs font-medium text-slate-700 dark:text-slate-200">{r.courseName}</div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-black text-slate-900 dark:text-white">{r.marks}</span>
-                            <Badge color={r.grade === 'A' || r.grade === 'A+' ? 'green' : r.grade === 'B' ? 'indigo' : 'amber'}>
+                            <Badge color={r.grade === 'A' ? 'green' : r.grade === 'B' ? 'indigo' : r.grade === 'C' ? 'amber' : 'red'}>
                               {r.grade}
                             </Badge>
                           </div>
@@ -383,7 +383,7 @@ export default function ParentDashboard() {
                           <div className="text-[10px] text-slate-500">Percentage</div>
                         </div>
                         <div className="text-center">
-                          <div className={`text-xl font-black ${r.grade === 'A+' || r.grade === 'A' ? 'text-emerald-400' : r.grade.startsWith('B') ? 'text-indigo-400' : 'text-amber-400'}`}>{r.grade}</div>
+                          <div className={`text-xl font-black ${r.grade === 'A' ? 'text-emerald-400' : r.grade === 'B' ? 'text-indigo-400' : r.grade === 'C' ? 'text-amber-400' : 'text-rose-400'}`}>{r.grade}</div>
                           <div className="text-[10px] text-slate-500">Grade</div>
                         </div>
                         <div className="text-center">
@@ -404,7 +404,7 @@ export default function ParentDashboard() {
                           <span className="text-xs text-slate-600 dark:text-slate-300">{s.courseName}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-slate-900 dark:text-white">{s.marks}/{s.maxMarks}</span>
-                            <Badge color={s.grade === 'A+' || s.grade === 'A' ? 'green' : s.grade.startsWith('B') ? 'indigo' : 'amber'}>{s.grade}</Badge>
+                            <Badge color={s.grade === 'A' ? 'green' : s.grade === 'B' ? 'indigo' : s.grade === 'C' ? 'amber' : 'red'}>{s.grade}</Badge>
                           </div>
                         </div>
                       ))}

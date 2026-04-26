@@ -2,7 +2,6 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useAuthStore } from '../../store/authStore'
-import ChatWidget from '../smart/ChatWidget'
 
 export default function AppLayout() {
   const navigate = useNavigate()
@@ -36,8 +35,6 @@ export default function AppLayout() {
         </button>
         {user ? null : null}
       </div>
-
-      <ChatWidget />
     </div>
   )
 }

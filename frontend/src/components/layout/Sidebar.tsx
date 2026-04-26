@@ -12,11 +12,14 @@ const items: Item[] = [
   { label: 'Subjects', to: '/admin/subjects', roles: ['admin'] },
   { label: 'Fees', to: '/fees', roles: ['admin'] },
   { label: 'Timetable', to: '/admin/timetable', roles: ['admin'] },
+  { label: 'Smart Timetable', to: '/admin/smart-timetable', roles: ['admin'] },
+  { label: 'Weekly Timetable', to: '/admin/weekly-timetable', roles: ['admin'] },
   { label: 'Salary', to: '/admin/salary', roles: ['admin'] },
   { label: 'Skill Hub', to: '/admin/skill-hub', roles: ['admin'] },
   { label: 'Subjects', to: '/courses', roles: ['student', 'teacher'] },
   { label: 'Assignments', to: '/assignments', roles: ['student', 'teacher'] },
   { label: 'Attendance', to: '/attendance', roles: ['student', 'teacher'] },
+  { label: 'Timetable', to: '/timetable', roles: ['student', 'teacher', 'parent'] },
   { label: 'Results', to: '/results', roles: ['student', 'teacher', 'admin'] },
   { label: 'Fees', to: '/fees', roles: ['student'] },
   { label: 'Events', to: '/events', roles: ['student', 'teacher', 'admin'] },
@@ -33,6 +36,7 @@ const items: Item[] = [
   { label: 'Student Achievements', to: '/achievements', roles: ['admin'] },
   { label: 'Email Center', to: '/admin/email', roles: ['admin'] },
   { label: 'Class Subjects', to: '/admin/class-subjects', roles: ['admin'] },
+  { label: 'School Timing', to: '/admin/school-config', roles: ['admin'] },
   { label: 'Exam Department', to: '/exam', roles: ['exam_department'] },
 ]
 
