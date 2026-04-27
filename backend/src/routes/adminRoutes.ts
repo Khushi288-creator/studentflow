@@ -23,17 +23,48 @@ async function generateUniqueId(role: 'student' | 'teacher' | 'admin'): Promise<
 
 // ── GET students ──────────────────────────────────────────────────────────
 router.get('/admin/students', authenticateJWT, requireRole(['admin']), async (_req, res) => {
-  const users = await prisma.user.findMany({
-    where: { role: 'student' },
-    select: { id: true, name: true, email: true, role: true, studentProfile: true },
-  })
-  res.json({
-    students: users.map((u) => ({
-      id: u.id, name: u.name, email: u.email, role: u.role,
-      uniqueId: u.email.endsWith('@school.local') ? u.email.replace('@school.local', '') : null,
-      profile: u.studentProfile,
-    })),
-  })
+  try {
+    const users = await prisma.user.findMany({
+      where: { role: 'student' },
+      select: { 
+        id: true, 
+        name: true, 
+        email: true, 
+        role: true, 
+        studentProfile: {
+          select: {
+            gender: true,
+            fatherName: true,
+            motherName: true,
+            dob: true,
+            religion: true,
+            fatherOccupation: true,
+            address: true,
+            className: true,
+            phone: true,
+            photoUrl: true,
+          }
+        }
+      },
+    })
+    
+    console.log('[GET /admin/students] Found', users.length, 'students')
+    console.log('[GET /admin/students] Sample student:', JSON.stringify(users[0], null, 2))
+    
+    res.json({
+      students: users.map((u) => ({
+        id: u.id, 
+        name: u.name, 
+        email: u.email, 
+        role: u.role,
+        uniqueId: u.email.endsWith('@school.local') ? u.email.replace('@school.local', '') : null,
+        profile: u.studentProfile || null,
+      })),
+    })
+  } catch (err: any) {
+    console.error('[GET /admin/students] Error:', err)
+    res.status(500).json({ message: err?.message })
+  }
 })
 
 // ── GET distinct classes ──────────────────────────────────────────────────

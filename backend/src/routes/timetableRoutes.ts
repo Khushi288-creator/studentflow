@@ -97,6 +97,19 @@ router.get('/timetable', authenticateJWT, async (req, res) => {
   }
 })
 
+// ── GET /timetable/all — admin gets all timetable entries ─────────────────
+router.get('/timetable/all', authenticateJWT, requireRole(['admin']), async (req, res) => {
+  try {
+    const entries = await prisma.timetable.findMany({
+      where: { type: 'regular' },
+      orderBy: [{ class: 'asc' }, { day: 'asc' }, { time: 'asc' }],
+    })
+    res.json({ entries })
+  } catch (err: any) {
+    res.status(500).json({ message: err?.message })
+  }
+})
+
 // ── POST /timetable — admin creates regular timetable ─────────────────────
 router.post('/timetable', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {

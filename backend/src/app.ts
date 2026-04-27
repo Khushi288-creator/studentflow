@@ -30,7 +30,6 @@ import emailRoutes from './routes/emailRoutes'
 import examRoutes from './routes/examRoutes'
 import classSubjectsRoutes from './routes/classSubjectsRoutes'
 import schoolConfigRoutes from './routes/schoolConfigRoutes'
-import weeklyTimetableRoutes from './routes/weeklyTimetableRoutes'
 
 export const app = express();
 
@@ -76,7 +75,6 @@ app.use('/api', emailRoutes)
 app.use('/api', examRoutes)
 app.use('/api', classSubjectsRoutes)
 app.use('/api', schoolConfigRoutes)
-app.use('/api', weeklyTimetableRoutes)
 
 // Basic error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

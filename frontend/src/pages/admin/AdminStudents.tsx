@@ -23,7 +23,10 @@ export default function AdminStudents() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['adminStudents'],
-    queryFn: async () => (await http.get('/admin/students')).data as { students: StudentRow[] },
+    queryFn: async () => {
+      const response = (await http.get('/admin/students')).data as { students: StudentRow[] }
+      return response
+    },
   })
   const students = data?.students ?? []
 
@@ -152,9 +155,29 @@ export default function AdminStudents() {
                     </span>
                   </td>
                   <td className="py-3 pr-4 font-medium text-slate-900 dark:text-slate-50">{s.name}</td>
-                  <td className="py-3 pr-4 text-slate-600">{s.profile?.className ? `Class ${s.profile.className}` : '—'}</td>
-                  <td className="py-3 pr-4 text-slate-500 text-xs">{s.profile?.gender ?? '—'}</td>
-                  <td className="py-3 pr-4 text-slate-500 text-xs">{s.profile?.fatherName ?? '—'}</td>
+                  <td className="py-3 pr-4">
+                    {s.profile?.className ? (
+                      <span className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        Class {s.profile.className}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400">Not set</span>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4">
+                    {s.profile?.gender ? (
+                      <span className="text-slate-600 dark:text-slate-300">{s.profile.gender}</span>
+                    ) : (
+                      <span className="text-xs text-slate-400">Not set</span>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4">
+                    {s.profile?.fatherName ? (
+                      <span className="text-slate-600 dark:text-slate-300">{s.profile.fatherName}</span>
+                    ) : (
+                      <span className="text-xs text-slate-400">Not set</span>
+                    )}
+                  </td>
                   <td className="py-3 flex gap-2">
                     <button type="button" onClick={() => openEdit(s)}
                       className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">
@@ -236,7 +259,15 @@ export default function AdminStudents() {
             <div className="text-xs font-semibold text-slate-400 uppercase mb-2">Personal Details</div>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-1">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Gender</span>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Class *</span>
+                <select value={form.className} onChange={f('className')}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50">
+                  <option value="">Select class...</option>
+                  {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1">
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Gender *</span>
                 <select value={form.gender} onChange={f('gender')}
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50">
                   <option value="">Select...</option>
@@ -246,13 +277,13 @@ export default function AdminStudents() {
                 </select>
               </label>
               <label className="grid gap-1">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Date of Birth</span>
-                <input value={form.dob} onChange={f('dob')} type="date"
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Father's Name *</span>
+                <input value={form.fatherName} onChange={f('fatherName')} placeholder="Father's full name"
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50" />
               </label>
               <label className="grid gap-1">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Father's Name</span>
-                <input value={form.fatherName} onChange={f('fatherName')} placeholder="Father's full name"
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Date of Birth</span>
+                <input value={form.dob} onChange={f('dob')} type="date"
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50" />
               </label>
               <label className="grid gap-1">
@@ -272,14 +303,6 @@ export default function AdminStudents() {
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Father's Occupation</span>
                 <input value={form.fatherOccupation} onChange={f('fatherOccupation')} placeholder="e.g., Farmer"
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50" />
-              </label>
-              <label className="grid gap-1">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Class</span>
-                <select value={form.className} onChange={f('className')}
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50">
-                  <option value="">Select class...</option>
-                  {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
-                </select>
               </label>
               <label className="grid gap-1">
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Phone</span>
@@ -309,7 +332,8 @@ export default function AdminStudents() {
               </label>
             </div>
 
-            <button type="button" disabled={isPending || (!!form.phone && form.phone.length !== 10)}
+            <button type="button" 
+              disabled={isPending || (!!form.phone && form.phone.length !== 10)}
               onClick={() => modalMode === 'create' ? createMutation.mutate() : editMutation.mutate()}
               className="mt-5 w-full rounded-2xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
               {isPending ? 'Saving...' : modalMode === 'create' ? 'Create Student' : 'Save Changes'}

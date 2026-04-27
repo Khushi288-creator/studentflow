@@ -11,16 +11,12 @@ import TeacherSalary from './pages/teacher/TeacherSalary'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminStudents from './pages/admin/AdminStudents'
 import AdminTeachers from './pages/admin/AdminTeachers'
-import AdminSubjects from './pages/admin/AdminSubjects'
 import AdminSalary from './pages/admin/AdminSalary'
-import AdminTimetable from './pages/admin/AdminTimetable'
 import AdminSmartTimetable from './pages/admin/AdminSmartTimetable'
-import AdminWeeklyTimetable from './pages/admin/AdminWeeklyTimetable'
 import AdminSkillHub from './pages/admin/AdminSkillHub'
 import AdminParents from './pages/admin/AdminParents'
 import AdminEmail from './pages/admin/AdminEmail'
 import AdminClassSubjects from './pages/admin/AdminClassSubjects'
-import AdminSchoolConfig from './pages/admin/AdminSchoolConfig'
 import ExamDepartmentDashboard from './pages/exam/ExamDepartmentDashboard'
 import SkillHub from './pages/student/SkillHub'
 import ParentDashboard from './pages/parent/ParentDashboard'
@@ -121,16 +117,12 @@ export default function App() {
         {/* Admin pages */}
         <Route path="/admin/students" element={<AdminStudents />} />
         <Route path="/admin/teachers" element={<AdminTeachers />} />
-        <Route path="/admin/subjects" element={<AdminSubjects />} />
         <Route path="/admin/salary" element={<AdminSalary />} />
-        <Route path="/admin/timetable" element={<AdminTimetable />} />
-        <Route path="/admin/smart-timetable" element={<AdminSmartTimetable />} />
-        <Route path="/admin/weekly-timetable" element={<AdminWeeklyTimetable />} />
+        <Route path="/admin/timetable" element={<AdminSmartTimetable />} />
         <Route path="/admin/skill-hub" element={<AdminSkillHub />} />
         <Route path="/admin/parents" element={<AdminParents />} />
         <Route path="/admin/email" element={<AdminEmail />} />
         <Route path="/admin/class-subjects" element={<AdminClassSubjects />} />
-        <Route path="/admin/school-config" element={<AdminSchoolConfig />} />
         <Route path="/exam" element={<ExamDepartmentDashboard />} />
         <Route path="/skill-hub" element={<SkillHub />} />
         <Route path="/salary" element={<TeacherSalary />} />
